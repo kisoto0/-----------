@@ -12,10 +12,10 @@ body {
 }
 
 .container {
+    display: flex;
+    gap: 30px;
     max-width: 1200px;
-    width: 100%;
     margin: 0 auto;
-    padding: 0 15px;
 }
 
 .header {
@@ -178,11 +178,12 @@ button:hover {
 }
 
 .calendar {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    border-collapse: collapse;
-    margin-top: 20px;
+    width: 300px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 }
 
 .calendar th, .calendar td {
@@ -557,4 +558,138 @@ label {
     .add-department-btn {
         width: 100%;
     }
+}
+
+/* Vacation calendar styles */
+.user-info {
+    flex: 1;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.vacation-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f4ff;
+    border-radius: 6px;
+}
+
+.calendar-header {
+    text-align: center;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.calendar-nav button {
+    background: #007bff;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.calendar-nav button:hover {
+    background: #0056b3;
+}
+
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.weekday {
+    text-align: center;
+    padding: 5px;
+}
+
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.day {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.day:hover {
+    background: #e0e0e0;
+    cursor: pointer;
+}
+
+.day.today {
+    background: #007bff;
+    color: #fff;
+    font-weight: bold;
+}
+
+.day.selected {
+    background: #28a745;
+    color: #fff;
+    font-weight: bold;
+}
+
+.day.today.selected {
+    background: #28a745;
+}
+
+.day.start-date {
+    background: #28a745;
+    color: #fff;
+}
+
+.day.end-date {
+    background: #dc3545;
+    color: #fff;
+}
+
+.day.in-range {
+    background: #a8d5ff;
+}
+
+.submit-button-container {
+    text-align: center;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.submit-button {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+    background: #218838;
+}
+
+.submit-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
 }
