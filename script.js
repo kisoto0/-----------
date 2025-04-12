@@ -573,29 +573,50 @@ function initializeVacationCalendar() {
             }
 
             const userResponse = await fetchWithAuth(`${remote}/panel/employees/id/${userId}`);
+            console.log('User response:', userResponse); // Debug log
             if (userResponse.ok) {
                 const userData = await userResponse.json();
                 employeeId = userData.id;
+                depId = userData.deps_id;
                 
-                const departmentResponse = await fetchWithAuth(`${remote}/panel/deps/id/${userData.deps_id}`);
-                if (departmentResponse.ok) {
-                    const deptData = await departmentResponse.json();
-                    departmentId = deptData.id;
-                    
-                    document.getElementById('userName').textContent = `${userData.last_name} ${userData.name} ${userData.patronymic}`;
-                    document.getElementById('userPosition').textContent = userData.post;
-                    document.getElementById('userDepartment').textContent = deptData.title;
+                // Сначала обновляем информацию о пользователе
+                const fullName = `${userData.last_name} ${userData.name} ${userData.patronymic || ''}`.trim();
+                document.getElementById('userName').textContent = fullName;
+                document.getElementById('userPosition').textContent = userData.post;
+                
+                //Получаем данные об отделе
+                if (userData.deps_id) {
+                    const departmentResponse = await fetchWithAuth(`${remote}/panel/deps/${userData.deps_id}`);
+                    console.log('Department response:', departmentResponse); // Debug log
+                    if (departmentResponse.ok) {
+                        const deptData = await departmentResponse.json();
+                        departmentId = deptData.id;
+                        document.getElementById('userDepartment').textContent = deptData.title;
+                    } else {
+                        throw new Error('Ошибка при получении данных отдела');
+                    }
                 } else {
-                    throw new Error('Failed to fetch department data');
+                    document.getElementById('userDepartment').textContent = 'Не назначен';
+                }
+                
+                //Обновляем количество дней отпуска
+                const availableDays = document.getElementById('availableDays');
+                if (availableDays) {
+                    const totalDays = (userData.vacation_days || 0) + (userData.additional_days || 0);
+                    availableDays.textContent = totalDays;
                 }
             } else {
-                throw new Error('Failed to fetch user data');
+                throw new Error('Ошибка при получении данных пользователя');
             }
         } catch (error) {
             console.error('Error loading user data:', error);
             document.getElementById('userName').textContent = 'Ошибка загрузки';
             document.getElementById('userPosition').textContent = 'Ошибка загрузки';
             document.getElementById('userDepartment').textContent = 'Ошибка загрузки';
+            const availableDays = document.getElementById('availableDays');
+            if (availableDays) {
+                availableDays.textContent = '0';
+            }
         }
     }
 
@@ -660,12 +681,36 @@ function initializeVacationCalendar() {
         });
     }
 
-    function generateCalendar() {
+    async function loadUserVacations() {
+        try {
+            const userId = getCookie('id');
+            if (!userId) return [];
+            
+            const response = await fetchWithAuth(`${remote}/panel/vacation/employee/${userId}`);
+            if (response.ok) {
+                const vacations = await response.json();
+                return vacations.map(vacation => ({
+                    ...vacation,
+                    start_date: new Date(vacation.start_at),
+                    end_date: new Date(vacation.end_at)
+                }));
+            }
+            return [];
+        } catch (error) {
+            console.error('Ошибка при загрузке отпусков:', error);
+            return [];
+        }
+    }
+
+    async function generateCalendar() {
         const month = parseInt(monthSelect.value);
         const year = parseInt(yearSelect.value);
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const today = new Date();
+        
+        // Load user's vacations
+        const userVacations = await loadUserVacations();
 
         calendarDays.innerHTML = '';
 
@@ -680,6 +725,18 @@ function initializeVacationCalendar() {
             const dayElement = document.createElement('div');
             dayElement.className = 'day';
             dayElement.textContent = day;
+            
+            const currentDate = new Date(year, month, day);
+            
+            // Check if this day is in any vacation period
+            const hasVacation = userVacations.some(vacation => 
+                currentDate >= vacation.start_date && 
+                currentDate <= vacation.end_date
+            );
+            
+            if (hasVacation) {
+                dayElement.classList.add('vacation-day');
+            }
 
             if (year === today.getFullYear() && 
                 month === today.getMonth() && 
@@ -745,7 +802,7 @@ function initializeVacationCalendar() {
     // Submit vacation request
     document.getElementById('submitButton')?.addEventListener('click', async function() {
         if (!startDate || !endDate || !employeeId || !departmentId) {
-            alert('Не удалось получить данные пользователя или отдела');
+            alert('Пожалуйста, выберите даты отпуска и убедитесь, что данные пользователя загружены');
             return;
         }
 
@@ -766,7 +823,7 @@ function initializeVacationCalendar() {
         };
 
         try {
-            const response = await fetch(`${remote}/panel/vacation/add`, {
+            const response = await fetchWithAuth(`${remote}/panel/vacation/add`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -776,14 +833,18 @@ function initializeVacationCalendar() {
 
             if (response.ok) {
                 alert('Заявка на отпуск успешно отправлена');
+                // Reset selection
                 startDate = null;
                 endDate = null;
                 document.querySelectorAll('.day').forEach(d => {
                     d.classList.remove('start-date', 'end-date', 'in-range');
                 });
                 updateSelectedPeriod();
+                // Refresh calendar to show new vacation
+                await generateCalendar();
             } else {
-                alert('Произошла ошибка при отправке заявки на отпуск');
+                const errorData = await response.json();
+                alert(errorData.message || 'Произошла ошибка при отправке заявки на отпуск');
             }
         } catch (error) {
             console.error('Ошибка:', error);
