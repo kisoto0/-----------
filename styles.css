@@ -1,0 +1,560 @@
+/* Base styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.department-section {
+    background: white;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.department-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.department-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: #666;
+}
+
+.employees-container {
+    padding: 15px;
+    overflow-x: auto;
+}
+
+.employee-card {
+    background: #f9f9f9;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.employee-card h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.employee-info {
+    color: #666;
+    margin: 5px 0;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    padding: 15px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.popup-content {
+    position: relative;
+    background-color: white;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    margin: 20px auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: popupFadeIn 0.3s ease-out;
+}
+
+.close-btn {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #666;
+    padding: 0;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.add-employee-btn {
+    background-color: #2196F3;
+}
+
+.add-employee-btn:hover {
+    background-color: #1976D2;
+}
+
+.add-department-btn {
+    margin-left: 10px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.add-department-btn:hover {
+    background-color: #45a049;
+}
+
+.calendar {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.calendar th, .calendar td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.calendar th {
+    background-color: #f2f2f2;
+}
+
+.calendar td:hover {
+    background-color: #f5f5f5;
+    cursor: pointer;
+}
+
+#userIdContainer {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.panel-container {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.left-section {
+    flex: 1;
+    padding: 20px;
+    background-color: white;
+}
+
+.right-section {
+    flex: 1;
+    padding: 20px;
+    background-color: white;
+    border-left: 1px solid #ddd;
+}
+
+.form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    max-width: 500px;
+    width: 90%;
+    margin: 20px auto;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#message:not(:empty) {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+#calendar {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#calendar th, #calendar td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+#calendar th {
+    background-color: #f5f5f5;
+}
+
+.user-id-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 15px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 14px;
+    z-index: 1000;
+}
+
+/* Responsive design */
+@media screen and (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .panel-container {
+        flex-direction: column;
+    }
+
+    .left-section, .right-section {
+        width: 100%;
+    }
+
+    .popup-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+
+    .calendar th, .calendar td {
+        padding: 5px;
+        font-size: 14px;
+    }
+
+    .department-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .add-department-btn {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+    }
+
+    .employee-card {
+        padding: 10px;
+    }
+
+    .popup {
+        align-items: flex-start;
+        padding: 10px;
+    }
+    
+    .popup-content {
+        margin: 10px auto;
+        padding: 15px;
+        width: 95%;
+    }
+
+    .popup form {
+        margin-top: 30px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .calendar th, .calendar td {
+        padding: 3px;
+        font-size: 12px;
+    }
+
+    .form-container {
+        padding: 15px;
+    }
+
+    input, select, button {
+        font-size: 14px;
+    }
+
+    .popup-content {
+        padding: 15px;
+    }
+
+    .user-id-container {
+        position: static;
+        margin-bottom: 10px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .popup {
+        padding: 5px;
+    }
+
+    .popup-content {
+        margin: 5px auto;
+        padding: 15px;
+        width: 100%;
+    }
+
+    .popup-content h2 {
+        font-size: 18px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        padding-right: 30px;
+    }
+
+    .close-btn {
+        right: 10px;
+        top: 10px;
+        font-size: 20px;
+    }
+
+    .popup .form-group {
+        margin-bottom: 10px;
+    }
+
+    .popup input,
+    .popup select {
+        font-size: 16px;
+        padding: 8px;
+    }
+
+    .popup button[type="submit"] {
+        margin-top: 15px;
+    }
+}
+
+/* Timeline responsive styles */
+.timeline-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.timeline-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+.timeline-controls button {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 8px 15px;
+    min-width: 40px;
+}
+
+.timeline-controls span {
+    flex: 0 0 auto;
+    margin: 0 10px;
+}
+
+.timeline-controls select {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 120px;
+    max-width: 200px;
+}
+
+@media screen and (max-width: 480px) {
+    .timeline-controls {
+        gap: 10px;
+    }
+
+    .timeline-controls button {
+        padding: 8px 12px;
+        min-width: 35px;
+    }
+
+    .timeline-controls select {
+        min-width: 100px;
+    }
+
+    .timeline-controls span {
+        margin: 0 5px;
+    }
+}
+
+/* Department and employee section responsive */
+.department-section {
+    background: white;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.employees-container {
+    padding: 15px;
+    overflow-x: auto;
+}
+
+/* User calendar page specific styles */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+@media screen and (max-width: 480px) {
+    .calendar-nav {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .calendar {
+        font-size: 14px;
+    }
+
+    .day {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* Добавляем стили для анимации попапа */
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.button-container {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.add-employee-btn,
+.add-department-btn {
+    flex: 1;
+    margin: 0;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.add-employee-btn {
+    background-color: #2196F3;
+}
+
+.add-employee-btn:hover {
+    background-color: #1976D2;
+}
+
+.add-department-btn {
+    background-color: #4CAF50;
+}
+
+.add-department-btn:hover {
+    background-color: #45a049;
+}
+
+@media screen and (max-width: 768px) {
+    .button-container {
+        flex-direction: column;
+    }
+
+    .add-employee-btn,
+    .add-department-btn {
+        width: 100%;
+    }
+}

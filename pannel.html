@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="userIdContainer" class="user-id-container"></div>
+    <div class="panel-container">
+        <div class="left-section">
+            <h1>Панель управления</h1>
+            <div class="employees-list">
+                <h2>Список сотрудников</h2>
+                <div id="employeesList"></div>
+            </div>
+            <div class="button-container">
+                <button class="add-employee-btn" onclick="openAddEmployeePopup()">Добавить сотрудника</button>
+                <button class="add-department-btn" onclick="openAddDepartmentPopup()">Добавить отдел</button>
+            </div>
+            
+            <!-- Popup Form -->
+            <div id="addEmployeePopup" class="popup">
+                <div class="popup-content">
+                    <span class="close-btn" onclick="closeAddEmployeePopup()">&times;</span>
+                    <h2>Добавить нового сотрудника</h2>
+                    <form id="addEmployeeForm" onsubmit="handleAddEmployee(event)">
+                        <div class="form-group">
+                            <label for="name">Имя:</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Фамилия:</label>
+                            <input type="text" id="last_name" name="last_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="patronymic">Отчество:</label>
+                            <input type="text" id="patronymic" name="patronymic" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Пароль:</label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tg">Telegram:</label>
+                            <input type="text" id="tg" name="tg" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="vacation_days">Дни отпуска:</label>
+                            <input type="number" id="vacation_days" name="vacation_days" value="28" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="additional_days">Дополнительные дни:</label>
+                            <input type="number" id="additional_days" name="additional_days" value="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="deps_id">Отдел:</label>
+                            <select id="deps_id" name="deps_id" required>
+                                <option value="">Выберите отдел</option>
+                                <option value="0719c3a8-2ae8-4cc8-99df-ec33cd2ee695">IT dept</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="post">Должность:</label>
+                            <input type="text" id="post" name="post" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Добавить</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Department Popup Form -->
+            <div id="addDepartmentPopup" class="popup">
+                <div class="popup-content">
+                    <span class="close-btn" onclick="closeAddDepartmentPopup()">&times;</span>
+                    <h2>Добавить новый отдел</h2>
+                    <form id="addDepartmentForm" onsubmit="handleAddDepartment(event)">
+                        <div class="form-group">
+                            <label for="title">Название отдела:</label>
+                            <input type="text" id="title" name="title" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Добавить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="right-section">
+            <h2>График отпусков сотрудников</h2>
+            <div class="timeline-container">
+                <div class="timeline-controls">
+                    <button onclick="changeYear(-1)">←</button>
+                    <span id="currentYear"></span>
+                    <button onclick="changeYear(1)">→</button>
+                    <select id="scaleSelect" onchange="changeTimelineScale()">
+                        <option value="month">По месяцам</option>
+                        <option value="quarter">По кварталам</option>
+                        <option value="year">Годовой</option>
+                    </select>
+                </div>
+                <div class="timeline-header" id="timelineHeader">
+                    <!-- Месяцы/кварталы будут добавлены через JavaScript -->
+                </div>
+                <div class="timeline-content" id="timelineContent">
+                    <!-- Отпуска сотрудников будут добавлены через JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
