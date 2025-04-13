@@ -693,3 +693,541 @@ label {
     background: #cccccc;
     cursor: not-allowed;
 }
+
+.conflict-item {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.conflict-header {
+    color: #e74c3c;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.vacation-info {
+    margin: 5px 0;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.conflict-dates {
+    margin-top: 10px;
+}
+
+.conflict-dates-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.conflict-date {
+    display: inline-block;
+    background: #ffebee;
+    padding: 4px 8px;
+    margin: 2px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.no-conflicts {
+    color: #27ae60;
+    padding: 15px;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.error {
+    color: #e74c3c;
+    padding: 15px;
+    text-align: center;
+    background: #fff3f3;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.department-item {
+    padding: 10px 15px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.department-item:hover {
+    background-color: #e9ecef;
+}
+
+.department-item.active {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+#departmentsList {
+    margin-bottom: 15px;
+}
+
+.calendar-timeline {
+    margin-top: 30px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.calendar-timeline h3 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.timeline-department-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.department-title {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.timeline-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.timeline-item {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.timeline-item.approved {
+    border-left-color: #28a745;
+}
+
+.timeline-item.pending {
+    border-left-color: #ffc107;
+}
+
+.timeline-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.employee-name {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.vacation-dates {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.timeline-item-details {
+    font-size: 0.9em;
+}
+
+.vacation-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+.approved .vacation-status {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.pending .vacation-status {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.manager-comment {
+    margin-top: 8px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-style: italic;
+    color: #6c757d;
+}
+
+/* Стили для диаграммы Ганта */
+.gantt-wrapper {
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-x: auto;
+    height: 400px;
+    position: relative;
+}
+
+.gantt-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.gantt-controls button {
+    padding: 8px 16px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.gantt-controls button:hover {
+    background: #e0e0e0;
+}
+
+.gantt-controls button.active {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.bar-wrapper {
+    fill: #ddd;
+    stroke: none;
+}
+
+.bar {
+    fill: #2196F3;
+    stroke: none;
+    transition: fill 0.3s ease;
+}
+
+.bar.approved {
+    fill: #4CAF50;
+}
+
+.bar.pending {
+    fill: #FFC107;
+}
+
+.bar:hover {
+    fill: #1976D2;
+}
+
+.bar.approved:hover {
+    fill: #388E3C;
+}
+
+.bar.pending:hover {
+    fill: #FFA000;
+}
+
+.bar-label {
+    fill: #333;
+    font-size: 12px;
+    dominant-baseline: central;
+}
+
+/* Стили для подсветки выбранных отпусков */
+.timeline-item.highlighted {
+    background: #e3f2fd;
+    border-left-color: #1976d2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: scale(1.02);
+    transition: all 0.3s ease;
+}
+
+.bar.highlighted {
+    filter: brightness(1.2);
+    stroke: #1976d2;
+    stroke-width: 2px;
+}
+
+.gantt-wrapper .bar-wrapper:hover {
+    cursor: pointer;
+}
+
+/* Анимация для плавного перехода при выделении */
+.timeline-item {
+    transition: all 0.3s ease;
+}
+
+/* Стили для всплывающей подсказки в диаграмме Ганта */
+.gantt-popup {
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 10px;
+    font-size: 12px;
+    max-width: 250px;
+}
+
+.gantt-popup h6 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.gantt-popup p {
+    margin: 4px 0;
+    color: #666;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+}
+
+.zoom-controls button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.zoom-controls button:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.gantt-container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Стили для масштабирования */
+.gantt-scale-info {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Курсор при перетаскивании */
+.gantt-wrapper.panning {
+    cursor: grabbing;
+}
+
+.gantt-wrapper:not(.panning) {
+    cursor: grab;
+}
+
+/* Стили для масштабируемого таймлайна */
+.timeline-container {
+    position: relative;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.timeline-zoom-controls {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+}
+
+.timeline-zoom-controls button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeline-zoom-controls button:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.timeline-header {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.timeline-month,
+.timeline-quarter {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+    border-right: 1px solid #dee2e6;
+}
+
+.timeline-content {
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    overflow-x: auto;
+}
+
+.timeline-scale-info {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-department-section {
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+/* Стили для разных масштабов */
+.scale-month .timeline-month {
+    display: block;
+}
+
+.scale-month .timeline-quarter {
+    display: none;
+}
+
+.scale-quarter .timeline-month {
+    display: none;
+}
+
+.scale-quarter .timeline-quarter {
+    display: block;
+}
+
+.scale-year .timeline-month,
+.scale-year .timeline-quarter {
+    display: none;
+}
+
+/* Стили для списка отпусков */
+.vacations-list {
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.vacations-list h3 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.2em;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.vacation-item {
+    padding: 15px;
+    border-left: 4px solid;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.vacation-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.vacation-item.approved {
+    border-left-color: #28a745;
+}
+
+.vacation-item.pending {
+    border-left-color: #ffc107;
+}
+
+.vacation-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.vacation-name {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.vacation-dates {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.vacation-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.vacation-department {
+    color: #495057;
+}
+
+.vacation-status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+}
+
+.approved .vacation-status {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.pending .vacation-status {
+    background-color: #fff3cd;
+    color: #856404;
+}

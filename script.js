@@ -1,4 +1,11 @@
 const remote = 'http://26.164.216.52:8000';
+let ganttChart = null;
+let currentViewMode = 'Month';
+let selectedVacationId = null;
+let zoomLevel = 1;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2;
+const ZOOM_STEP = 0.1;
 
 // Cookie management functions
 function setCookie(name, value, days) {
@@ -143,9 +150,13 @@ async function handleSubmit(event) {
 async function fetchVacations() {
     try {
         const [vacationsResponse, employeesResponse] = await Promise.all([
-            fetchWithAuth(`${remote}/panel/vacations/all`),
+            fetchWithAuth(`${remote}/panel/vacation/all`),
             fetchWithAuth(`${remote}/panel/employees/all`)
         ]);
+        
+        if (!vacationsResponse.ok || !employeesResponse.ok) {
+            throw new Error('Failed to fetch data');
+        }
         
         const vacations = await vacationsResponse.json();
         const employees = await employeesResponse.json();
@@ -155,10 +166,11 @@ async function fetchVacations() {
             const employee = employees.find(emp => emp.id === vacation.employee_id);
             return {
                 ...vacation,
-                employee_name: employee ? `${employee.last_name} ${employee.name}` : 'Unknown',
-                start_date: vacation.start_at,
-                end_date: vacation.end_at,
-                status: vacation.is_approved ? 'Одобрен' : 'На рассмотрении'
+                employee_name: employee ? `${employee.last_name} ${employee.name}` : 'Unknown Employee',
+                start_date: new Date(vacation.start_at),
+                end_date: new Date(vacation.end_at),
+                status: vacation.is_approved ? 'Одобрен' : 'На рассмотрении',
+                department_id: vacation.dep_id
             };
         });
     } catch (error) {
@@ -181,6 +193,8 @@ async function createCalendar() {
     // Create calendar grid
     let date = 1;
     const calendarBody = document.getElementById('calendar-body');
+    if (!calendarBody) return;
+    
     calendarBody.innerHTML = '';
     
     for (let i = 0; i < 6; i++) {
@@ -197,11 +211,11 @@ async function createCalendar() {
                 const currentDate = new Date(currentYear, currentMonth, date);
                 cell.textContent = date;
                 
-                const dayVacations = vacations.filter(vacation => {
-                    const startDate = new Date(vacation.start_at);
-                    const endDate = new Date(vacation.end_at);
-                    return currentDate >= startDate && currentDate <= endDate;
-                });
+                // Find all vacations for this day
+                const dayVacations = vacations.filter(vacation => 
+                    currentDate >= vacation.start_date && 
+                    currentDate <= vacation.end_date
+                );
                 
                 if (dayVacations.length > 0) {
                     cell.classList.add('vacation-day');
@@ -209,14 +223,19 @@ async function createCalendar() {
                     if (hasPending) {
                         cell.classList.add('pending-vacation');
                     }
+                    
+                    // Create tooltip with all vacations for this day
                     const tooltip = document.createElement('div');
                     tooltip.className = 'vacation-tooltip';
                     tooltip.innerHTML = dayVacations.map(vacation => 
-                        `${vacation.employee_name}<br>
-                         ${new Date(vacation.start_at).toLocaleDateString()} - ${new Date(vacation.end_at).toLocaleDateString()}<br>
-                         Статус: ${vacation.status}
-                         ${vacation.manager_comment ? '<br>Комментарий: ' + vacation.manager_comment : ''}`
+                        `<div class="vacation-tooltip-item ${vacation.is_approved ? 'approved' : 'pending'}">
+                            <div class="employee-name">${vacation.employee_name}</div>
+                            <div class="vacation-period">${vacation.start_date.toLocaleDateString()} - ${vacation.end_date.toLocaleDateString()}</div>
+                            <div class="vacation-status">Статус: ${vacation.status}</div>
+                            ${vacation.manager_comment ? `<div class="manager-comment">Комментарий: ${vacation.manager_comment}</div>` : ''}
+                        </div>`
                     ).join('<hr>');
+                    
                     cell.appendChild(tooltip);
                 }
                 
@@ -231,31 +250,55 @@ async function createCalendar() {
         }
     }
 
-    // Create timeline view
+    // Create timeline view with departments grouping
     const timelineDiv = document.createElement('div');
     timelineDiv.className = 'calendar-timeline';
-    timelineDiv.innerHTML = '<h3>Таймлайн отпусков</h3>';
+    timelineDiv.innerHTML = '<h3>Таймлайн отпусков по отделам</h3>';
 
-    // Sort vacations by start date
-    const sortedVacations = [...vacations].sort((a, b) => 
-        new Date(a.start_at) - new Date(b.start_at)
-    );
+    // Group vacations by department
+    const departmentVacations = {};
+    for (const vacation of vacations) {
+        if (!departmentVacations[vacation.department_id]) {
+            departmentVacations[vacation.department_id] = [];
+        }
+        departmentVacations[vacation.department_id].push(vacation);
+    }
 
-    sortedVacations.forEach(vacation => {
-        const timelineItem = document.createElement('div');
-        timelineItem.className = `timeline-item ${vacation.is_approved ? 'approved' : 'pending'}`;
-        
-        timelineItem.innerHTML = `
-            <div class="timeline-date">
-                ${new Date(vacation.start_at).toLocaleDateString()} - ${new Date(vacation.end_at).toLocaleDateString()}
-            </div>
-            <div class="timeline-employee">${vacation.employee_name}</div>
-            <div class="timeline-status">Статус: ${vacation.status}</div>
-            ${vacation.manager_comment ? `<div class="timeline-comment">Комментарий: ${vacation.manager_comment}</div>` : ''}
-        `;
-        
-        timelineDiv.appendChild(timelineItem);
-    });
+    // Get department names
+    try {
+        const depsResponse = await fetchWithAuth(`${remote}/panel/deps/all`);
+        const departments = await depsResponse.json();
+
+        // Create timeline sections for each department
+        for (const department of departments) {
+            const deptVacations = departmentVacations[department.id] || [];
+            if (deptVacations.length > 0) {
+                const deptSection = document.createElement('div');
+                deptSection.className = 'timeline-department-section';
+                deptSection.innerHTML = `
+                    <h4 class="department-title">${department.title}</h4>
+                    <div class="timeline-items">
+                        ${deptVacations.map(vacation => `
+                            <div class="timeline-item ${vacation.is_approved ? 'approved' : 'pending'}">
+                                <div class="timeline-item-header">
+                                    <span class="employee-name">${vacation.employee_name}</span>
+                                    <span class="vacation-dates">${vacation.start_date.toLocaleDateString()} - ${vacation.end_date.toLocaleDateString()}</span>
+                                </div>
+                                <div class="timeline-item-details">
+                                    <span class="vacation-status">Статус: ${vacation.status}</span>
+                                    ${vacation.manager_comment ? `<div class="manager-comment">Комментарий: ${vacation.manager_comment}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                timelineDiv.appendChild(deptSection);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+        timelineDiv.innerHTML += '<div class="error">Ошибка при загрузке данных отделов</div>';
+    }
 
     // Add timeline after calendar
     const calendarContainer = calendarBody.closest('.calendar-container') || calendarBody.parentElement;
@@ -859,3 +902,403 @@ function initializeVacationCalendar() {
 
 // Initialize vacation calendar when the page loads
 document.addEventListener('DOMContentLoaded', initializeVacationCalendar);
+
+async function fetchAndDisplayConflicts(deptId) {
+    try {
+        const response = await fetchWithAuth(`${remote}/panel/vacation/dept/${deptId}/conflicts`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch conflicts');
+        }
+        const data = await response.json();
+        
+        const conflictsListDiv = document.getElementById('conflictsList');
+        if (data && data.overlap && data.overlap.length > 0) {
+            const conflictDates = data.overlap.map(date => {
+                const formattedDate = new Date(date).toLocaleDateString('ru-RU');
+                return `<div class="conflict-date">${formattedDate}</div>`;
+            }).join('');
+
+            const vacation1Date = `${new Date(data.vacation1.start_at).toLocaleDateString('ru-RU')} - ${new Date(data.vacation1.end_at).toLocaleDateString('ru-RU')}`;
+            const vacation2Date = `${new Date(data.vacation2.start_at).toLocaleDateString('ru-RU')} - ${new Date(data.vacation2.end_at).toLocaleDateString('ru-RU')}`;
+
+            conflictsListDiv.innerHTML = `
+                <div class="conflict-item">
+                    <div class="conflict-header">Обнаружены пересечения отпусков:</div>
+                    <div class="vacation-info">Отпуск 1: ${vacation1Date}</div>
+                    <div class="vacation-info">Отпуск 2: ${vacation2Date}</div>
+                    <div class="conflict-dates">
+                        <div class="conflict-dates-header">Даты пересечения:</div>
+                        ${conflictDates}
+                    </div>
+                </div>
+            `;
+        } else {
+            conflictsListDiv.innerHTML = '<div class="no-conflicts">Конфликтов не обнаружено</div>';
+        }
+    } catch (error) {
+        console.error('Error fetching conflicts:', error);
+        document.getElementById('conflictsList').innerHTML = '<div class="error">Ошибка при загрузке конфликтов</div>';
+    }
+}
+
+// Update the existing loadDepartments function to call fetchAndDisplayConflicts when a department is selected
+async function loadDepartments() {
+    try {
+        const response = await fetchWithAuth(`${remote}/panel/deps/all`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch departments');
+        }
+        const departments = await response.json();
+        const departmentsList = document.getElementById('departmentsList');
+        departmentsList.innerHTML = departments.map(dept => `
+            <div class="department-item" onclick="fetchAndDisplayConflicts('${dept.id}')">
+                ${dept.title}
+            </div>
+        `).join('');
+
+        // Добавляем вызов загрузки конфликтов для первого отдела
+        if (departments.length > 0) {
+            await fetchAndDisplayConflicts(departments[0].id);
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+        document.getElementById('departmentsList').innerHTML = '<div class="error">Ошибка при загрузке отделов</div>';
+    }
+}
+
+// Initialize departments list and conflicts when the panel page loads
+if (window.location.pathname.includes('pannel.html')) {
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDepartments();
+        displayUserId();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.location.pathname.includes('pannel.html')) {
+        await loadDepartments();
+        displayUserId();
+        
+        // Add click highlight for department items
+        document.getElementById('departmentsList').addEventListener('click', (e) => {
+            if (e.target.classList.contains('department-item')) {
+                document.querySelectorAll('.department-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                e.target.classList.add('active');
+            }
+        });
+    }
+});
+
+function zoomGantt(direction) {
+    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel + (direction * ZOOM_STEP)));
+    if (newZoom !== zoomLevel) {
+        zoomLevel = newZoom;
+        updateGanttScale();
+    }
+}
+
+function resetGanttZoom() {
+    zoomLevel = 1;
+    updateGanttScale();
+    // Сброс положения скролла
+    const container = document.getElementById('ganttContainer');
+    if (container) {
+        container.scrollLeft = 0;
+    }
+}
+
+function updateGanttScale() {
+    if (ganttChart) {
+        // Обновляем размер колонок в зависимости от масштаба
+        const baseColumnWidth = 30; // Базовая ширина колонки
+        ganttChart.options.column_width = baseColumnWidth * zoomLevel;
+        ganttChart.refresh();
+        updateScaleInfo();
+    }
+}
+
+function updateScaleInfo() {
+    let scaleInfo = document.querySelector('.gantt-scale-info');
+    if (!scaleInfo) {
+        scaleInfo = document.createElement('div');
+        scaleInfo.className = 'gantt-scale-info';
+        document.getElementById('ganttContainer').appendChild(scaleInfo);
+    }
+    scaleInfo.textContent = `Масштаб: ${Math.round(zoomLevel * 100)}%`;
+}
+
+let isPanning = false;
+let startX;
+let scrollLeft;
+
+function initializePanning() {
+    const container = document.getElementById('ganttContainer');
+    if (!container) return;
+
+    container.addEventListener('mousedown', startPanning);
+    container.addEventListener('mousemove', doPanning);
+    container.addEventListener('mouseup', stopPanning);
+    container.addEventListener('mouseleave', stopPanning);
+}
+
+function startPanning(e) {
+    isPanning = true;
+    const container = document.getElementById('ganttContainer');
+    container.classList.add('panning');
+    startX = e.pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
+}
+
+function doPanning(e) {
+    if (!isPanning) return;
+    e.preventDefault();
+    const container = document.getElementById('ganttContainer');
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX) * 2;
+    container.scrollLeft = scrollLeft - walk;
+}
+
+function stopPanning() {
+    isPanning = false;
+    const container = document.getElementById('ganttContainer');
+    container.classList.remove('panning');
+}
+
+function highlightVacation(vacationId) {
+    // Снимаем выделение со всех элементов
+    document.querySelectorAll('.vacation-item').forEach(item => {
+        item.classList.remove('highlighted');
+    });
+    
+    // Подсвечиваем выбранный элемент в списке
+    const listItem = document.querySelector(`.vacation-item[data-vacation-id="${vacationId}"]`);
+    if (listItem) {
+        listItem.classList.add('highlighted');
+        // Прокручиваем к элементу в списке
+        listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Подсвечиваем элемент на диаграмме Ганта
+    if (ganttChart) {
+        const targetTask = ganttChart.tasks.find(task => task.id === vacationId);
+        if (targetTask) {
+            ganttChart.trigger_event('date_change', [targetTask]);
+            targetTask.$bar.classList.add('highlighted');
+        }
+        ganttChart.tasks.forEach(task => {
+            if (task.id !== vacationId) {
+                task.$bar.classList.remove('highlighted');
+            }
+        });
+    }
+
+    selectedVacationId = vacationId;
+}
+
+async function updateVacationsList(vacations, employees, departments) {
+    const vacationsList = document.getElementById('vacationsList');
+    if (!vacationsList) return;
+
+    const sortedVacations = [...vacations].sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+    
+    vacationsList.innerHTML = sortedVacations.map(vacation => {
+        const employee = employees.find(emp => emp.id === vacation.employee_id);
+        const department = departments.find(dept => dept.id === vacation.dep_id);
+        const employeeName = employee ? `${employee.last_name} ${employee.name} ${employee.patronymic || ''}` : 'Unknown Employee';
+        const departmentName = department ? department.title : 'Unknown Department';
+        
+        return `
+            <div class="vacation-item ${vacation.is_approved ? 'approved' : 'pending'}" data-vacation-id="${vacation.id}">
+                <div class="vacation-item-header">
+                    <span class="vacation-name">${employeeName}</span>
+                    <span class="vacation-dates">
+                        ${new Date(vacation.start_at).toLocaleDateString()} - ${new Date(vacation.end_at).toLocaleDateString()}
+                    </span>
+                </div>
+                <div class="vacation-details">
+                    <span class="vacation-department">${departmentName}</span>
+                    <span class="vacation-status">
+                        ${vacation.is_approved ? 'Одобрен' : 'На рассмотрении'}
+                    </span>
+                </div>
+                ${vacation.manager_comment ? 
+                    `<div class="manager-comment">Комментарий: ${vacation.manager_comment}</div>` 
+                    : ''}
+            </div>
+        `;
+    }).join('');
+
+    // Добавляем обработчики клика для синхронизации с диаграммой
+    vacationsList.querySelectorAll('.vacation-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const vacationId = item.dataset.vacationId;
+            highlightVacation(vacationId);
+        });
+    });
+}
+
+function changeGanttViewMode(mode) {
+    if (ganttChart) {
+        currentViewMode = mode;
+        ganttChart.change_view_mode(mode);
+        
+        // Обновляем активную кнопку
+        document.querySelectorAll('.gantt-controls button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`.gantt-controls button[onclick="changeGanttViewMode('${mode}')"]`).classList.add('active');
+
+        // При смене масштаба обновляем диаграмму
+        updateGanttScale();
+        
+        // Обновляем список отпусков с текущим выделением
+        if (selectedVacationId) {
+            highlightVacation(selectedVacationId);
+        }
+    }
+}
+
+async function initializeGanttChart() {
+    try {
+        if (typeof Gantt === 'undefined') {
+            throw new Error('Frappe Gantt library is not loaded');
+        }
+
+        const [vacationsResponse, employeesResponse, departmentsResponse] = await Promise.all([
+            fetchWithAuth(`${remote}/panel/vacation/all`),
+            fetchWithAuth(`${remote}/panel/employees/all`),
+            fetchWithAuth(`${remote}/panel/deps/all`)
+        ]);
+
+        const [vacations, employees, departments] = await Promise.all([
+            vacationsResponse.json(),
+            employeesResponse.json(),
+            departmentsResponse.json()
+        ]);
+
+        // Update vacations list
+        await updateVacationsList(vacations, employees, departments);
+
+        // Prepare tasks for Gantt chart
+        const tasks = vacations.map(vacation => {
+            const employee = employees.find(emp => emp.id === vacation.employee_id);
+            const department = departments.find(dept => dept.id === vacation.dep_id);
+            
+            return {
+                id: vacation.id,
+                name: employee ? `${employee.last_name} ${employee.name}` : 'Unknown',
+                start: new Date(vacation.start_at),
+                end: new Date(vacation.end_at),
+                progress: 100,
+                dependencies: '',
+                custom_class: vacation.is_approved ? 'approved' : 'pending',
+                department: department ? department.title : 'Unknown Department'
+            };
+        });
+
+        // Group tasks by department
+        const groupedTasks = [];
+        departments.forEach(dept => {
+            const deptTasks = tasks.filter(task => task.department === dept.title);
+            if (deptTasks.length > 0) {
+                groupedTasks.push({
+                    id: 'dept_' + dept.id,
+                    name: dept.title,
+                    start: new Date(),
+                    end: new Date(),
+                    progress: 100,
+                    hideChildren: false,
+                    custom_class: 'department-header'
+                });
+                groupedTasks.push(...deptTasks);
+            }
+        });
+
+        const ganttElement = document.querySelector('#vacationGantt');
+        if (!ganttElement) {
+            throw new Error('Gantt chart container not found');
+        }
+
+        if (ganttChart) {
+            ganttChart.destroy();
+        }
+
+        ganttChart = new Gantt("#vacationGantt", groupedTasks, {
+            header_height: 50,
+            column_width: 30,
+            step: 24,
+            view_modes: ['Day', 'Week', 'Month'],
+            bar_height: 20,
+            bar_corner_radius: 3,
+            arrow_curve: 5,
+            padding: 18,
+            view_mode: 'Month',
+            date_format: 'YYYY-MM-DD',
+            on_click: (task) => {
+                if (task.id && !task.id.startsWith('dept_')) {
+                    highlightVacation(task.id);
+                }
+            },
+            on_date_change: (task, start, end) => {
+                console.log(`Task ${task.name} moved to ${start}-${end}`);
+            },
+            custom_popup_html: (task) => {
+                if (task.id.startsWith('dept_')) return '';
+                const status = task.custom_class === 'approved' ? 'Одобрен' : 'На рассмотрении';
+                return `
+                    <div class="gantt-popup">
+                        <h6>${task.name}</h6>
+                        <p>Отдел: ${task.department || ''}</p>
+                        <p>Начало: ${task.start.toLocaleDateString()}</p>
+                        <p>Конец: ${task.end.toLocaleDateString()}</p>
+                        <p>Статус: ${status}</p>
+                    </div>
+                `;
+            }
+        });
+
+        initializePanning();
+        
+        const container = document.getElementById('ganttContainer');
+        if (container) {
+            container.addEventListener('wheel', (e) => {
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    const direction = e.deltaY < 0 ? 1 : -1;
+                    zoomGantt(direction);
+                }
+            });
+        }
+
+        updateScaleInfo();
+
+    } catch (error) {
+        console.error('Error initializing Gantt chart:', error);
+        const ganttWrapper = document.querySelector('.gantt-wrapper');
+        if (ganttWrapper) {
+            ganttWrapper.innerHTML = `<div class="error">Ошибка при загрузке диаграммы отпусков: ${error.message}</div>`;
+        }
+    }
+}
+
+// Initialize everything when libraries are loaded
+function checkLibrariesAndInitialize() {
+    if (typeof Gantt !== 'undefined' && typeof moment !== 'undefined' && typeof Snap !== 'undefined') {
+        initializeGanttChart();
+        document.querySelector('.gantt-controls button[onclick="changeGanttViewMode(\'Month\')"]')?.classList.add('active');
+    } else {
+        // If libraries aren't loaded yet, wait a bit and try again
+        setTimeout(checkLibrariesAndInitialize, 100);
+    }
+}
+
+// Initialize when page loads
+if (window.location.pathname.includes('pannel.html')) {
+    document.addEventListener('DOMContentLoaded', () => {
+        checkLibrariesAndInitialize();
+        loadDepartments();
+        displayUserId();
+    });
+}

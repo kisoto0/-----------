@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Панель управления</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Добавляем Moment.js для работы с датами -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <!-- Обновляем версию Frappe Gantt -->
+    <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.css">
+    <!-- Добавляем Snap.svg для корректной работы Frappe Gantt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
 </head>
 <body>
     <div id="userIdContainer" class="user-id-container"></div>
@@ -14,6 +21,11 @@
             <div class="employees-list">
                 <h2>Список сотрудников</h2>
                 <div id="employeesList"></div>
+            </div>
+            <div class="issue-list">
+                <h2>Конфликты</h2>
+                <div id="departmentsList"></div>
+                <div id="conflictsList"></div>
             </div>
             <div class="button-container">
                 <button class="add-employee-btn" onclick="openAddEmployeePopup()">Добавить сотрудника</button>
@@ -91,23 +103,22 @@
         </div>
         <div class="right-section">
             <h2>График отпусков сотрудников</h2>
-            <div class="timeline-container">
-                <div class="timeline-controls">
-                    <button onclick="changeYear(-1)">←</button>
-                    <span id="currentYear"></span>
-                    <button onclick="changeYear(1)">→</button>
-                    <select id="scaleSelect" onchange="changeTimelineScale()">
-                        <option value="month">По месяцам</option>
-                        <option value="quarter">По кварталам</option>
-                        <option value="year">Годовой</option>
-                    </select>
+            <div class="gantt-controls">
+                <button onclick="changeGanttViewMode('Day')">По дням</button>
+                <button onclick="changeGanttViewMode('Week')">По неделям</button>
+                <button onclick="changeGanttViewMode('Month')">По месяцам</button>
+                <div class="zoom-controls">
+                    <button onclick="zoomGantt(-1)" title="Уменьшить масштаб">-</button>
+                    <button onclick="zoomGantt(1)" title="Увеличить масштаб">+</button>
+                    <button onclick="resetGanttZoom()" title="Сбросить масштаб">⟲</button>
                 </div>
-                <div class="timeline-header" id="timelineHeader">
-                    <!-- Месяцы/кварталы будут добавлены через JavaScript -->
-                </div>
-                <div class="timeline-content" id="timelineContent">
-                    <!-- Отпуска сотрудников будут добавлены через JavaScript -->
-                </div>
+            </div>
+            <div class="gantt-wrapper" id="ganttContainer">
+                <svg id="vacationGantt"></svg>
+            </div>
+            <div class="vacations-list">
+                <h3>Список всех отпусков</h3>
+                <div id="vacationsList"></div>
             </div>
         </div>
     </div>
