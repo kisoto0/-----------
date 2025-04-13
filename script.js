@@ -500,6 +500,8 @@ async function handleAddEmployee(event) {
         password: document.getElementById('password').value,
         email: document.getElementById('email').value.trim(),
         tg: document.getElementById('tg').value.trim(),
+        role: 0,
+        tabel_number: document.getElementById('tabel_number').value.trim(),
         vacation_days: parseInt(document.getElementById('vacation_days').value),
         additional_days: parseInt(document.getElementById('additional_days').value),
         deps_id: document.getElementById('deps_id').value.trim(),
