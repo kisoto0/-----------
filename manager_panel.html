@@ -3,36 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель управления</title>
+    <title>Панель руководителя отдела</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Добавляем Moment.js для работы с датами -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <!-- Обновляем версию Frappe Gantt -->
     <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.css">
-    <!-- Добавляем Snap.svg для корректной работы Frappe Gantt -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
+    <script>
+        // Ensure libraries are loaded before initializing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize any global variables or configurations here
+            moment.locale('ru');
+        });
+    </script>
 </head>
 <body>
     <div id="userIdContainer" class="user-id-container"></div>
     <div class="panel-container">
         <div class="left-section">
-            <h1>Панель управления</h1>
+            <h1>Панель руководителя отдела</h1>
             <div class="employees-list">
-                <h2>Список сотрудников</h2>
+                <h2>Список сотрудников отдела</h2>
                 <div id="employeesList"></div>
             </div>
             <div class="issue-list">
                 <h2>Конфликты</h2>
-                <div id="departmentsList"></div>
                 <div id="conflictsList"></div>
             </div>
             <div class="button-container">
                 <button class="add-employee-btn" onclick="openAddEmployeePopup()">Добавить сотрудника</button>
-                <button class="add-department-btn" onclick="openAddDepartmentPopup()">Добавить отдел</button>
-                <button onclick="downloadVacationsTable()" class="download-button">
-                    Скачать таблицу отпусков
-                </button>
+                <button class="approve-vacations-btn" onclick="approveVacations()">Подтвердить отпуска</button>
             </div>
             
             <!-- Popup Form -->
@@ -74,13 +75,6 @@
                             <input type="number" id="additional_days" name="additional_days" value="0" required>
                         </div>
                         <div class="form-group">
-                            <label for="deps_id">Отдел:</label>
-                            <select id="deps_id" name="deps_id" required>
-                                <option value="">Выберите отдел</option>
-                                <option value="0719c3a8-2ae8-4cc8-99df-ec33cd2ee695">IT dept</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
                             <label for="post">Должность:</label>
                             <input type="text" id="post" name="post" required>
                         </div>
@@ -92,24 +86,9 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Department Popup Form -->
-            <div id="addDepartmentPopup" class="popup">
-                <div class="popup-content">
-                    <span class="close-btn" onclick="closeAddDepartmentPopup()">&times;</span>
-                    <h2>Добавить новый отдел</h2>
-                    <form id="addDepartmentForm" onsubmit="handleAddDepartment(event)">
-                        <div class="form-group">
-                            <label for="title">Название отдела:</label>
-                            <input type="text" id="title" name="title" required>
-                        </div>
-                        <button type="submit" class="submit-btn">Добавить</button>
-                    </form>
-                </div>
-            </div>
         </div>
         <div class="right-section">
-            <h2>График отпусков сотрудников</h2>
+            <h2>График отпусков сотрудников отдела</h2>
             <div class="gantt-controls">
                 <button onclick="changeGanttViewMode('Day')">По дням</button>
                 <button onclick="changeGanttViewMode('Week')">По неделям</button>
@@ -124,7 +103,7 @@
                 <svg id="vacationGantt"></svg>
             </div>
             <div class="vacations-list">
-                <h3>Список всех отпусков</h3>
+                <h3>Список отпусков отдела</h3>
                 <div id="vacationsList"></div>
             </div>
         </div>

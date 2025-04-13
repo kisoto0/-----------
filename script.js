@@ -116,7 +116,9 @@ async function handleSubmit(event) {
                         // Redirect based on role
                         if (userData.role == 2) {
                             window.location.href = 'pannel.html';
-                        } else if (userData.role == 0){
+                        } else if (userData.role == 1) {
+                            window.location.href = 'manager_panel.html';
+                        } else if (userData.role == 0) {
                             window.location.href = 'user.html';
                         } else {
                             console.error('Unknown role:', userData.role);
@@ -147,32 +149,127 @@ async function handleSubmit(event) {
     }
 }
 
+// Add new function for approving vacations
+async function approveVacations() {
+    try {
+        const userId = getCookie('id');
+        // Get user's department ID
+        const userResponse = await fetchWithAuth(`${remote}/panel/employees/id/${userId}`);
+        const userData = await userResponse.json();
+        
+        if (!userData.deps_id) {
+            throw new Error('Manager department not found');
+        }
+
+        // Get all pending vacations for the department
+        const vacationsResponse = await fetchWithAuth(`${remote}/panel/vacation/dept/${userData.deps_id}`);
+        const vacations = await vacationsResponse.json();
+        const pendingVacations = vacations.filter(v => !v.is_approved);
+
+        if (pendingVacations.length === 0) {
+            alert('Нет отпусков для подтверждения');
+            return;
+        }
+
+        // Approve each vacation using the new endpoint
+        for (const vacation of pendingVacations) {
+            const approveResponse = await fetchWithAuth(`${remote}/panel/vacation/employee/${vacation.employee_id}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    is_approved: true,
+                    manager_comment: 'Одобрено руководителем отдела'
+                })
+            });
+
+            if (!approveResponse.ok) {
+                throw new Error(`Failed to approve vacation for employee ${vacation.employee_id}`);
+            }
+        }
+
+        alert('Все отпуска успешно подтверждены');
+        // Refresh the page to show updated status
+        window.location.reload();
+    } catch (error) {
+        console.error('Error approving vacations:', error);
+        alert('Ошибка при подтверждении отпусков');
+    }
+}
+
+// Modify fetchVacations for department managers
 async function fetchVacations() {
     try {
-        const [vacationsResponse, employeesResponse] = await Promise.all([
-            fetchWithAuth(`${remote}/panel/vacation/all`),
-            fetchWithAuth(`${remote}/panel/employees/all`)
-        ]);
+        // Check if we're on manager panel
+        const isManagerPanel = window.location.pathname.includes('manager_panel.html');
+        const userId = getCookie('id');
         
-        if (!vacationsResponse.ok || !employeesResponse.ok) {
-            throw new Error('Failed to fetch data');
+        // Get manager's department ID first
+        const userResponse = await fetchWithAuth(`${remote}/panel/employees/id/${userId}`);
+        const userData = await userResponse.json();
+        
+        if (isManagerPanel) {
+            if (!userData.deps_id) {
+                throw new Error('Manager department not found');
+            }
+
+            // Get department name
+            const deptResponse = await fetchWithAuth(`${remote}/panel/deps/${userData.deps_id}`);
+            const deptData = await deptResponse.json();
+
+            // Fetch department vacations and employees in parallel
+            const [deptVacationsResponse, employeesResponse] = await Promise.all([
+                fetchWithAuth(`${remote}/panel/vacation/dept/${userData.deps_id}`),
+                fetchWithAuth(`${remote}/panel/employees/deps/${userData.deps_id}`)
+            ]);
+
+            if (!deptVacationsResponse.ok || !employeesResponse.ok) {
+                throw new Error('Failed to fetch data');
+            }
+
+            const vacations = await deptVacationsResponse.json();
+            const employees = await employeesResponse.json();
+            
+            return vacations.map(vacation => {
+                const employee = employees.find(emp => emp.id === vacation.employee_id);
+                return {
+                    ...vacation,
+                    employee_name: employee ? `${employee.last_name} ${employee.name}` : 'Unknown Employee',
+                    start_date: new Date(vacation.start_at),
+                    end_date: new Date(vacation.end_at),
+                    status: vacation.is_approved ? 'Одобрен' : 'На рассмотрении',
+                    department_id: userData.deps_id,
+                    department_name: deptData.title
+                };
+            });
+        } else {
+            // Original fetchVacations logic for admin panel
+            const [vacationsResponse, employeesResponse] = await Promise.all([
+                fetchWithAuth(`${remote}/panel/vacation/all`),
+                fetchWithAuth(`${remote}/panel/employees/all`)
+            ]);
+            
+            if (!vacationsResponse.ok || !employeesResponse.ok) {
+                throw new Error('Failed to fetch data');
+            }
+            
+            const vacations = await vacationsResponse.json();
+            const employees = await employeesResponse.json();
+            
+            // Enrich vacation data with employee names
+            return vacations.map(vacation => {
+                const employee = employees.find(emp => emp.id === vacation.employee_id);
+                return {
+                    ...vacation,
+                    employee_name: employee ? `${employee.last_name} ${employee.name}` : 'Unknown Employee',
+                    start_date: new Date(vacation.start_at),
+                    end_date: new Date(vacation.end_at),
+                    status: vacation.is_approved ? 'Одобрен' : 'На рассмотрении',
+                    department_id: vacation.dep_id
+                };
+            });
         }
-        
-        const vacations = await vacationsResponse.json();
-        const employees = await employeesResponse.json();
-        
-        // Enrich vacation data with employee names
-        return vacations.map(vacation => {
-            const employee = employees.find(emp => emp.id === vacation.employee_id);
-            return {
-                ...vacation,
-                employee_name: employee ? `${employee.last_name} ${employee.name}` : 'Unknown Employee',
-                start_date: new Date(vacation.start_at),
-                end_date: new Date(vacation.end_at),
-                status: vacation.is_approved ? 'Одобрен' : 'На рассмотрении',
-                department_id: vacation.dep_id
-            };
-        });
     } catch (error) {
         console.error('Ошибка при загрузке отпусков:', error);
         return [];
@@ -897,6 +994,7 @@ function initializeVacationCalendar() {
         }
     });
 
+    
     // Initialize
     loadUserData();
     generateCalendar();
@@ -1168,17 +1266,49 @@ async function initializeGanttChart() {
             throw new Error('Frappe Gantt library is not loaded');
         }
 
-        const [vacationsResponse, employeesResponse, departmentsResponse] = await Promise.all([
-            fetchWithAuth(`${remote}/panel/vacation/all`),
-            fetchWithAuth(`${remote}/panel/employees/all`),
-            fetchWithAuth(`${remote}/panel/deps/all`)
-        ]);
+        // First check if we're on the manager panel
+        const isManagerPanel = window.location.pathname.includes('manager_panel.html');
+        let vacations, employees, departments;
 
-        const [vacations, employees, departments] = await Promise.all([
-            vacationsResponse.json(),
-            employeesResponse.json(),
-            departmentsResponse.json()
-        ]);
+        if (isManagerPanel) {
+            // Get manager's department ID
+            const userId = getCookie('id');
+            const userResponse = await fetchWithAuth(`${remote}/panel/employees/id/${userId}`);
+            const userData = await userResponse.json();
+            
+            if (!userData.deps_id) {
+                throw new Error('Manager department not found');
+            }
+
+            // Fetch department-specific data
+            const [vacationsResponse, employeesResponse, departmentsResponse] = await Promise.all([
+                fetchWithAuth(`${remote}/panel/vacation/dept/${userData.deps_id}`),
+                fetchWithAuth(`${remote}/panel/employees/deps/${userData.deps_id}`),
+                [fetchWithAuth(`${remote}/panel/deps/${userData.deps_id}`)]
+            ]);
+
+            [vacations, employees, departments] = await Promise.all([
+                vacationsResponse.json(),
+                employeesResponse.json(),
+                departmentsResponse.json()
+            ]);
+
+            // Filter employees to only show those in manager's department
+            employees = employees.filter(emp => emp.deps_id === userData.deps_id);
+        } else {
+            // For admin panel, fetch all data
+            const [vacationsResponse, employeesResponse, departmentsResponse] = await Promise.all([
+                fetchWithAuth(`${remote}/panel/vacation/all`),
+                fetchWithAuth(`${remote}/panel/employees/all`),
+                fetchWithAuth(`${remote}/panel/deps/all`)
+            ]);
+
+            [vacations, employees, departments] = await Promise.all([
+                vacationsResponse.json(),
+                employeesResponse.json(),
+                departmentsResponse.json()
+            ]);
+        }
 
         // Update vacations list
         await updateVacationsList(vacations, employees, departments);
@@ -1200,24 +1330,7 @@ async function initializeGanttChart() {
             };
         });
 
-        // Group tasks by department
-        const groupedTasks = [];
-        departments.forEach(dept => {
-            const deptTasks = tasks.filter(task => task.department === dept.title);
-            if (deptTasks.length > 0) {
-                groupedTasks.push({
-                    id: 'dept_' + dept.id,
-                    name: dept.title,
-                    start: new Date(),
-                    end: new Date(),
-                    progress: 100,
-                    hideChildren: false,
-                    custom_class: 'department-header'
-                });
-                groupedTasks.push(...deptTasks);
-            }
-        });
-
+        // Initialize Gantt chart
         const ganttElement = document.querySelector('#vacationGantt');
         if (!ganttElement) {
             throw new Error('Gantt chart container not found');
@@ -1227,7 +1340,7 @@ async function initializeGanttChart() {
             ganttChart.destroy();
         }
 
-        ganttChart = new Gantt("#vacationGantt", groupedTasks, {
+        ganttChart = new Gantt("#vacationGantt", tasks, {
             header_height: 50,
             column_width: 30,
             step: 24,
@@ -1303,4 +1416,39 @@ if (window.location.pathname.includes('pannel.html')) {
         loadDepartments();
         displayUserId();
     });
+}
+
+async function downloadVacationsTable() {
+    try {
+        const response = await fetchWithAuth(`${remote}/panel/vacation/export/all`, {
+            method: 'GET',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to download vacations table');
+        }
+
+        // Get filename from response headers or use default
+        const filename = response.headers.get('content-disposition')?.split('filename=')[1] || 'vacations.xlsx';
+
+        // Create blob from response
+        const blob = await response.blob();
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    } catch (error) {
+        console.error('Error downloading vacations table:', error);
+        alert('Ошибка при скачивании таблицы отпусков');
+    }
 }

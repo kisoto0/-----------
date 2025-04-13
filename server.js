@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-const HOST = '26.152.217.40';
+const HOST = '26.157.82.51';
 const PORT = 3001;
 
 const server = app.listen(PORT, HOST, () => {
